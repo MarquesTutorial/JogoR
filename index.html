@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+   <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Intergaláctico de Reciclagem</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    background: url('https://cdn.jsdelivr.net/gh/gist/stars-background.svg') repeat, #000033;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+  }
+  
+  #game-container {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 20px;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  #trash-container {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+  }
+  
+  .trash-item {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  
+  .trash-item:hover {
+    transform: scale(1.1);
+  }
+  
+  #bins-container {
+    display: flex;
+    justify-content: space-around;
+  }
+  
+  .bin {
+    width: 100px;
+    height: 120px;
+    border: 3px solid #fff;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    cursor: pointer;
+  }
+  
+  .bin-lid {
+    width: 100%;
+    height: 20px;
+    background-color: #fff;
+    border-radius: 5px 5px 0 0;
+  }
+  
+  #score {
+    font-size: 24px;
+    margin-top: 20px;
+  }
+  
+  #message {
+    font-size: 20px;
+    margin-top: 10px;
+    font-weight: bold;
+    min-height: 30px;
+  }
+  
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  .floating {
+    animation: float 3s ease-in-out infinite;
+  }
+</style>
+</head>
+<body>
+  <div id="game-container">
+    <h1>Quiz Intergaláctico de Reciclagem</h1>
+    <div id="trash-container"></div>
+    <div id="bins-container">
+      <div class="bin" style="background-color: #ff0000;" data-color="vermelho">
+        <div class="bin-lid"></div>
+      </div>
+      <div class="bin" style="background-color: #0000ff;" data-color="azul">
+        <div class="bin-lid"></div>
+      </div>
+      <div class="bin" style="background-color: #ffff00;" data-color="amarelo">
+        <div class="bin-lid"></div>
+      </div>
+      <div class="bin" style="background-color: #008000;" data-color="verde">
+        <div class="bin-lid"></div>
+      </div>
+    </div>
+    <div id="score">Pontuação: 0</div>
+    <div id="message"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+  <script>
+    const trashItems = [
+      { emoji: '📰', color: 'azul', name: 'papel' },
+      { emoji: '🥫', color: 'amarelo', name: 'metal' },
+      { emoji: '🍾', color: 'verde', name: 'vidro' },
+      { emoji: '🥤', color: 'vermelho', name: 'plástico' },
+      { emoji: '📦', color: 'azul', name: 'papelão' },
+      { emoji: '🥡', color: 'vermelho', name: 'isopor' },
+      { emoji: '🍽️', color: 'amarelo', name: 'metal' },
+      { emoji: '💡', color: 'verde', name: 'lâmpada' }
+    ];
+
+    let score = 0;
+    const trashContainer = document.getElementById('trash-container');
+    const scoreElement = document.getElementById('score');
+    const messageElement = document.getElementById('message');
+
+    function createTrashItem() {
+      const randomTrash = trashItems[Math.floor(Math.random() * trashItems.length)];
+      const trashElement = document.createElement('div');
+      trashElement.className = 'trash-item floating';
+      trashElement.innerHTML = randomTrash.emoji;
+      trashElement.dataset.color = randomTrash.color;
+      trashElement.title = randomTrash.name;
+      trashElement.style.backgroundColor = getRandomColor();
+      trashContainer.appendChild(trashElement);
+
+      trashElement.addEventListener('click', () => {
+        gsap.to(trashElement, {
+          scale: 1.2,
+          yoyo: true,
+          repeat: 1,
+          duration: 0.2
+        });
+      });
+
+      return trashElement;
+    }
+
+    function getRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    function startGame() {
+      for (let i = 0; i < 4; i++) {
+        createTrashItem();
+      }
+    }
+
+    function showMessage(text, isCorrect) {
+      messageElement.textContent = text;
+      messageElement.style.color = isCorrect ? '#00ff00' : '#ff0000';
+      gsap.from(messageElement, {
+        y: -20,
+        opacity: 0,
+        duration: 0.5
+      });
+      setTimeout(() => {
+        gsap.to(messageElement, {
+          opacity: 0,
+          duration: 0.5
+        });
+      }, 2000);
+    }
+
+    document.querySelectorAll('.bin').forEach(bin => {
+      bin.addEventListener('click', () => {
+        const selectedTrash = document.querySelector('.trash-item.selected');
+        if (selectedTrash) {
+          if (selectedTrash.dataset.color === bin.dataset.color) {
+            score += 10;
+            showMessage('Parabéns! Você acertou!', true);
+            gsap.to(selectedTrash, {
+              y: '100%',
+              opacity: 0,
+              duration: 0.5,
+              onComplete: () => {
+                selectedTrash.remove();
+                createTrashItem();
+              }
+            });
+          } else {
+            score -= 5;
+            showMessage('Ops! Tente novamente!', false);
+            gsap.to(selectedTrash, {
+              x: ['0%', '-5%', '5%', '-5%', '5%', '0%'],
+              duration: 0.4
+            });
+          }
+          selectedTrash.classList.remove('selected');
+          updateScore();
+        }
+      });
+    });
+
+    trashContainer.addEventListener('click', (e) => {
+      if (e.target.classList.contains('trash-item')) {
+        document.querySelectorAll('.trash-item').forEach(item => item.classList.remove('selected'));
+        e.target.classList.add('selected');
+      }
+    });
+
+    function updateScore() {
+      scoreElement.textContent = `Pontuação: ${score}`;
+    }
+
+    startGame();
+  </script>
+</body>
+</html>
